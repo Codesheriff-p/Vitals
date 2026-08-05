@@ -1,0 +1,76 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<div class="hms-page-header">
+    <div>
+        <p class="hms-breadcrumb"><a href="/dashboard">Home</a> / Laboratory</p>
+        <h1 class="hms-page-title">Lab Test Catalog</h1>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/laboratory/requests" class="btn btn-outline-hms"><i class="bi bi-clipboard2-pulse me-1"></i> Requests</a>
+        <% if (['admin','lab_technician'].includes(user.role)) { %>
+        <a href="/laboratory/add" class="btn hms-btn-primary"><i class="bi bi-plus-lg me-1"></i> Add Test</a>
+        <% } %>
+    </div>
+</div>
+
+<div class="hms-card mb-3">
+    <div class="hms-card-body py-3">
+        <form action="/laboratory" method="GET" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Search by test name" value="<%= search %>">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-hms w-100">Search</button>
+            </div>
+            <% if (search) { %>
+            <div class="col-md-2"><a href="/laboratory" class="btn btn-outline-secondary w-100">Clear</a></div>
+            <% } %>
+        </form>
+    </div>
+</div>
+
+<div class="hms-card">
+    <div class="hms-card-body">
+        <% if (tests.length) { %>
+        <div class="table-responsive">
+            <table class="table hms-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Test Name</th>
+                        <th>Normal Range</th>
+                        <th>Unit</th>
+                        <th>Price</th>
+                        <% if (['admin','lab_technician'].includes(user.role)) { %><th class="text-end">Actions</th><% } %>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% tests.forEach(t => { %>
+                    <tr>
+                        <td class="fw-semibold"><%= t.test_name %></td>
+                        <td><%= t.normal_range || '—' %></td>
+                        <td><%= t.unit || '—' %></td>
+                        <td>₦<%= Number(t.price).toLocaleString('en-NG', {minimumFractionDigits: 2}) %></td>
+                        <% if (['admin','lab_technician'].includes(user.role)) { %>
+                        <td class="text-end">
+                            <a href="/laboratory/<%= t.id %>/edit" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+                            <form action="/laboratory/<%= t.id %>/delete" method="POST" class="d-inline" data-confirm="Delete <%= t.test_name %> from the catalog?">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                        <% } %>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+        <% } else { %>
+        <div class="hms-empty-state"><i class="bi bi-clipboard2-pulse"></i>No lab tests found.</div>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

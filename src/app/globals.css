@@ -1,26 +1,164 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Class-based dark mode: `dark:` utilities apply when a `.dark` class sits
+   on <html> (or any ancestor), toggled by ThemeToggle — not by OS/browser
+   prefers-color-scheme. */
+@custom-variant dark (&:where(.dark, .dark *));
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@theme {
+  --color-primary: #1a5276;
+  --color-primary-dark: #123d59;
+  --color-secondary: #2e86c1;
+  --color-success: #1e8449;
+  --color-warning: #d68910;
+  --color-danger: #c0392b;
+  --color-light-bg: #f4f6f9;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-ink: #060b14;
+  --color-screen: #0f1b2d;
+  --color-screen-line: #16293f;
+  --color-trace: #33e29a;
+  --color-trace-amber: #f2a93b;
+  /* trace is bright enough it fails contrast as body/label text on a white
+     background. Use trace-deep for that; trace itself stays for dark
+     backgrounds, and for opaque fills (bg-trace + text-ink) which are fine
+     in either mode since they're self-contained. */
+  --color-trace-deep: #047857;
+
+  /* --color-success/-warning/-danger/-info (via --color-secondary) are
+     tuned for light backgrounds. These "bright" variants are for text/icons
+     that need to sit on the app's dark ink/screen surfaces instead. */
+  --color-success-bright: #34d399;
+  --color-warning-bright: #fbbf24;
+  --color-danger-bright: #f87171;
+  --color-info-bright: #38bdf8;
+
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-light-bg);
+  color: #1b2431;
+}
+
+/* Root-cause fix: lots of table cells and other text across the app rely on
+   this inherited color rather than an explicit Tailwind class. It's a plain
+   CSS rule, not a `dark:` utility, so it needs its own override here or it
+   silently stays dark-on-dark when the app switches to dark mode. */
+.dark body {
+  color: #ffffff;
+}
+
+@layer utilities {
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold capitalize;
+  }
+  .badge::before {
+    content: "";
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: currentColor;
+  }
+  .badge-success {
+    @apply bg-success/10 text-success dark:bg-success-bright/15 dark:text-success-bright;
+  }
+  .badge-warning {
+    @apply bg-warning/10 text-warning dark:bg-white/10 dark:text-white;
+  }
+  .badge-danger {
+    @apply bg-danger/10 text-danger dark:bg-danger-bright/15 dark:text-danger-bright;
+  }
+  .badge-info {
+    @apply bg-secondary/10 text-secondary dark:bg-white/10 dark:text-white;
+  }
+  .badge-neutral {
+    @apply bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-white;
+  }
+  .badge-neutral::before {
+    background: currentColor;
+    opacity: 0.5;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* --- Landing hero: vitals-monitor motif --- */
+.monitor-screen {
+  --grid-line: var(--color-screen-line);
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center;
+  -webkit-mask-image: radial-gradient(ellipse 85% 70% at 50% 40%, black 55%, transparent 100%);
+  mask-image: radial-gradient(ellipse 85% 70% at 50% 40%, black 55%, transparent 100%);
+}
+
+/* The landing hero is dark in both themes and keeps the default navy line.
+   Surfaces that flip with the theme (the auth pages) add this class so the
+   grid stays visible on a light background instead of vanishing into it. */
+.monitor-screen-adaptive {
+  --grid-line: #dde4ed;
+}
+.dark .monitor-screen-adaptive {
+  --grid-line: var(--color-screen-line);
+}
+
+.ecg-trace {
+  stroke-dasharray: 1400;
+  stroke-dashoffset: 1400;
+  animation: trace-sweep 4.5s linear infinite;
+}
+
+@keyframes trace-sweep {
+  0% {
+    stroke-dashoffset: 1400;
+  }
+  60% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -1400;
+  }
+}
+
+.pulse-dot::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--color-trace);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-trace) 60%, transparent);
+  animation: pulse-dot 2s ease-out infinite;
+}
+
+@keyframes pulse-dot {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-trace) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--color-trace) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-trace) 0%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ecg-trace {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .pulse-dot::before {
+    animation: none;
+  }
 }

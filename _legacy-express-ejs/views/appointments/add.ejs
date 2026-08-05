@@ -1,0 +1,77 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<div class="hms-page-header">
+    <div>
+        <p class="hms-breadcrumb"><a href="/dashboard">Home</a> / <a href="/appointments">Appointments</a> / New</p>
+        <h1 class="hms-page-title">New Appointment</h1>
+    </div>
+</div>
+
+<% if (errors && errors.length) { %>
+<div class="alert alert-danger">
+    <ul class="mb-0 ps-3">
+        <% errors.forEach(e => { %><li><%= e %></li><% }); %>
+    </ul>
+</div>
+<% } %>
+
+<div class="hms-card">
+    <div class="hms-card-body">
+        <form action="/appointments/add" method="POST">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="patient_id" class="form-label hms-required">Patient</label>
+                    <select class="form-select" id="patient_id" name="patient_id" required>
+                        <option value="">Select patient...</option>
+                        <% patients.forEach(p => { %>
+                        <option value="<%= p.id %>" <%= String(formData.patient_id) === String(p.id) ? 'selected' : '' %>>
+                            <%= p.first_name %> <%= p.last_name %> (<%= p.patient_number %>)
+                        </option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="doctor_id" class="form-label hms-required">Doctor</label>
+                    <select class="form-select" id="doctor_id" name="doctor_id" required>
+                        <option value="">Select doctor...</option>
+                        <% doctors.forEach(d => { %>
+                        <option value="<%= d.id %>" <%= String(formData.doctor_id) === String(d.id) ? 'selected' : '' %>>
+                            Dr. <%= d.name %><% if (d.department_name) { %> — <%= d.department_name %><% } %>
+                        </option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="appointment_date" class="form-label hms-required">Date</label>
+                    <input type="date" class="form-control" id="appointment_date" name="appointment_date" value="<%= formData.appointment_date || '' %>" required>
+                </div>
+                <div class="col-md-4">
+                    <label for="appointment_time" class="form-label hms-required">Time</label>
+                    <input type="time" class="form-control" id="appointment_time" name="appointment_time" value="<%= formData.appointment_time || '' %>" required>
+                </div>
+                <div class="col-md-4">
+                    <label for="type" class="form-label">Type</label>
+                    <select class="form-select" id="type" name="type">
+                        <% APPOINTMENT_TYPES.forEach(t => { %>
+                        <option value="<%= t %>" <%= formData.type === t ? 'selected' : '' %>><%= t %></option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div class="col-12">
+                    <label for="notes" class="form-label">Notes</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3"><%= formData.notes || '' %></textarea>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn hms-btn-primary"><i class="bi bi-check-lg me-1"></i> Schedule Appointment</button>
+                <a href="/appointments" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

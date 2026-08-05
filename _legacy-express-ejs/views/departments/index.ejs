@@ -1,0 +1,56 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<div class="hms-page-header">
+    <div>
+        <p class="hms-breadcrumb"><a href="/dashboard">Home</a> / Departments</p>
+        <h1 class="hms-page-title">Departments</h1>
+    </div>
+    <a href="/departments/add" class="btn hms-btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Add Department
+    </a>
+</div>
+
+<div class="row g-3">
+    <% if (departments.length) { %>
+        <% departments.forEach(d => { %>
+        <div class="col-md-6 col-lg-4">
+            <div class="hms-card h-100">
+                <div class="hms-card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="fw-semibold mb-0"><%= d.name %></h6>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="/departments/<%= d.id %>/edit"><i class="bi bi-pencil me-2"></i>Edit</a></li>
+                                <li>
+                                    <form action="/departments/<%= d.id %>/delete" method="POST" data-confirm="Delete the <%= d.name %> department?">
+                                        <button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i>Delete</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <p class="text-muted small flex-grow-1"><%= d.description || 'No description provided.' %></p>
+                    <div class="d-flex justify-content-between small border-top pt-2 mt-2">
+                        <span><i class="bi bi-person-badge me-1"></i><%= d.doctor_count %> Doctor(s)</span>
+                        <span><i class="bi bi-person-workspace me-1"></i><%= d.staff_count %> Staff</span>
+                    </div>
+                    <div class="small text-muted mt-2">
+                        <i class="bi bi-person-check me-1"></i>
+                        Head: <%= d.head_doctor_name ? 'Dr. ' + d.head_doctor_name : 'Unassigned' %>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <% }); %>
+    <% } else { %>
+        <div class="col-12">
+            <div class="hms-card"><div class="hms-card-body">
+                <div class="hms-empty-state"><i class="bi bi-diagram-3"></i>No departments found.</div>
+            </div></div>
+        </div>
+    <% } %>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,58 @@
+<%- include('../../partials/header') %>
+<%- include('../../partials/sidebar') %>
+
+<div class="hms-page-header">
+    <div>
+        <p class="hms-breadcrumb"><a href="/dashboard">Home</a> / <a href="/pharmacy">Pharmacy</a> / <a href="/pharmacy/prescriptions">Prescriptions</a> / #<%= prescription.id %></p>
+        <h1 class="hms-page-title">Prescription #<%= prescription.id %></h1>
+    </div>
+    <% if (prescription.status === 'pending' && ['admin','pharmacist'].includes(user.role)) { %>
+    <form action="/pharmacy/prescriptions/<%= prescription.id %>/dispense" method="POST" data-confirm="Dispense this prescription? Stock levels will be updated.">
+        <button type="submit" class="btn hms-btn-primary"><i class="bi bi-capsule me-1"></i> Dispense</button>
+    </form>
+    <% } %>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <div class="hms-card h-100">
+            <div class="hms-card-body">
+                <h6 class="fw-semibold mb-3">Prescription Info</h6>
+                <table class="table table-borderless table-sm mb-0">
+                    <tr><td class="text-muted">Patient</td><td><a href="/patients/<%= prescription.patient_id %>"><%= prescription.patient_first_name %> <%= prescription.patient_last_name %></a></td></tr>
+                    <tr><td class="text-muted">Patient #</td><td><%= prescription.patient_number %></td></tr>
+                    <tr><td class="text-muted">Doctor</td><td>Dr. <%= prescription.doctor_name %></td></tr>
+                    <tr><td class="text-muted">Status</td><td><span class="hms-badge <%= prescription.status === 'dispensed' ? 'hms-badge-success' : 'hms-badge-warning' %>"><%= prescription.status %></span></td></tr>
+                    <tr><td class="text-muted">Date</td><td><%= new Date(prescription.created_at).toLocaleDateString('en-GB') %></td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="hms-card">
+    <div class="hms-card-body">
+        <h6 class="fw-semibold mb-3">Drug Items</h6>
+        <% if (items.length) { %>
+        <div class="table-responsive">
+            <table class="table hms-table align-middle">
+                <thead><tr><th>Drug</th><th>Dosage</th><th>Quantity</th><th>Instructions</th></tr></thead>
+                <tbody>
+                    <% items.forEach(i => { %>
+                    <tr>
+                        <td class="fw-semibold"><%= i.drug_name %></td>
+                        <td><%= i.dosage || '—' %></td>
+                        <td><%= i.quantity %> <%= i.unit %></td>
+                        <td><%= i.instructions || '—' %></td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+        <% } else { %>
+        <div class="hms-empty-state"><i class="bi bi-capsule"></i>No drug items on this prescription.</div>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

@@ -1,0 +1,142 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<div class="hms-page-header">
+    <div>
+        <p class="hms-breadcrumb"><a href="/dashboard">Home</a> / <a href="/billing">Billing</a> / New</p>
+        <h1 class="hms-page-title">New Bill</h1>
+    </div>
+</div>
+
+<% if (errors && errors.length) { %>
+<div class="alert alert-danger">
+    <ul class="mb-0 ps-3"><% errors.forEach(e => { %><li><%= e %></li><% }); %></ul>
+</div>
+<% } %>
+
+<div class="hms-card">
+    <div class="hms-card-body">
+        <form action="/billing/add" method="POST" id="billForm">
+            <input type="hidden" name="appointment_id" value="<%= formData.appointment_id || '' %>">
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label for="patient_id" class="form-label hms-required">Patient</label>
+                    <select class="form-select" id="patient_id" name="patient_id" required>
+                        <option value="">Select patient...</option>
+                        <% patients.forEach(p => { %>
+                        <option value="<%= p.id %>" <%= String(formData.patient_id) === String(p.id) ? 'selected' : '' %>>
+                            <%= p.first_name %> <%= p.last_name %> (<%= p.patient_number %>)
+                        </option>
+                        <% }); %>
+                    </select>
+                </div>
+            </div>
+
+            <h6 class="fw-semibold mb-3">Billable Items</h6>
+            <div id="billItems">
+                <div class="row g-2 align-items-end bill-item mb-2">
+                    <div class="col-md-4">
+                        <label class="form-label small">Description</label>
+                        <input type="text" class="form-control" name="description" placeholder="e.g. General consultation">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Category</label>
+                        <select class="form-select" name="category">
+                            <% BILL_CATEGORIES.forEach(c => { %>
+                            <option value="<%= c %>"><%= c %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Qty</label>
+                        <input type="number" min="1" class="form-control bill-qty" name="quantity" value="1">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Unit Price (₦)</label>
+                        <input type="number" min="0" step="0.01" class="form-control bill-price" name="unit_price" value="0">
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label small">Total</label>
+                        <input type="text" class="form-control bill-line-total" value="0.00" disabled>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-outline-danger w-100 bill-remove-row" title="Remove"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" id="billAddRow" class="btn btn-sm btn-outline-hms mt-1">
+                <i class="bi bi-plus-lg me-1"></i> Add Another Item
+            </button>
+
+            <div class="row g-3 mt-4 justify-content-end">
+                <div class="col-md-4">
+                    <label for="discount" class="form-label">Discount (₦)</label>
+                    <input type="number" min="0" step="0.01" class="form-control" id="discount" name="discount" value="0">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Subtotal</label>
+                    <input type="text" class="form-control" id="billSubtotal" value="0.00" disabled>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Total</label>
+                    <input type="text" class="form-control fw-bold" id="billTotal" value="0.00" disabled>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn hms-btn-primary"><i class="bi bi-check-lg me-1"></i> Save Bill</button>
+                <a href="/billing" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function recalculate() {
+        let subtotal = 0;
+        document.querySelectorAll('.bill-item').forEach(row => {
+            const qty = parseFloat(row.querySelector('.bill-qty').value) || 0;
+            const price = parseFloat(row.querySelector('.bill-price').value) || 0;
+            const lineTotal = qty * price;
+            row.querySelector('.bill-line-total').value = lineTotal.toFixed(2);
+            subtotal += lineTotal;
+        });
+        const discount = parseFloat(document.getElementById('discount').value) || 0;
+        document.getElementById('billSubtotal').value = subtotal.toFixed(2);
+        document.getElementById('billTotal').value = Math.max(subtotal - discount, 0).toFixed(2);
+    }
+
+    document.getElementById('billForm').addEventListener('input', function (e) {
+        if (e.target.matches('.bill-qty, .bill-price, #discount')) recalculate();
+    });
+
+    document.getElementById('billAddRow').addEventListener('click', function () {
+        const container = document.getElementById('billItems');
+        const firstRow = container.querySelector('.bill-item');
+        const clone = firstRow.cloneNode(true);
+        clone.querySelectorAll('input').forEach(el => {
+            if (el.name === 'quantity') el.value = 1;
+            else if (el.classList.contains('bill-line-total')) el.value = '0.00';
+            else if (el.name === 'unit_price') el.value = 0;
+            else el.value = '';
+        });
+        clone.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+        container.appendChild(clone);
+    });
+
+    document.getElementById('billItems').addEventListener('click', function (e) {
+        const btn = e.target.closest('.bill-remove-row');
+        if (!btn) return;
+        const rows = document.querySelectorAll('.bill-item');
+        if (rows.length > 1) {
+            btn.closest('.bill-item').remove();
+            recalculate();
+        }
+    });
+
+    recalculate();
+</script>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,84 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<div class="hms-page-header">
+    <div>
+        <p class="hms-breadcrumb"><a href="/dashboard">Home</a> / Doctors</p>
+        <h1 class="hms-page-title">Doctors</h1>
+    </div>
+    <% if (user.role === 'admin') { %>
+    <a href="/doctors/add" class="btn hms-btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Add Doctor
+    </a>
+    <% } %>
+</div>
+
+<div class="hms-card mb-3">
+    <div class="hms-card-body py-3">
+        <form action="/doctors" method="GET" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <select name="department_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Departments</option>
+                    <% departments.forEach(d => { %>
+                    <option value="<%= d.id %>" <%= String(departmentId) === String(d.id) ? 'selected' : '' %>><%= d.name %></option>
+                    <% }); %>
+                </select>
+            </div>
+            <% if (departmentId) { %>
+            <div class="col-md-2">
+                <a href="/doctors" class="btn btn-outline-secondary w-100">Clear</a>
+            </div>
+            <% } %>
+        </form>
+    </div>
+</div>
+
+<div class="hms-card">
+    <div class="hms-card-body">
+        <% if (doctors.length) { %>
+        <div class="table-responsive">
+            <table class="table hms-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Specialization</th>
+                        <th>Department</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% doctors.forEach(d => { %>
+                    <tr>
+                        <td class="fw-semibold">Dr. <%= d.name %></td>
+                        <td><%= d.specialization %></td>
+                        <td><%= d.department_name || '—' %></td>
+                        <td><%= d.phone || '—' %></td>
+                        <td>
+                            <span class="hms-badge <%= d.status === 'active' ? 'hms-badge-success' : 'hms-badge-danger' %>"><%= d.status %></span>
+                        </td>
+                        <td class="text-end">
+                            <a href="/doctors/<%= d.id %>" class="btn btn-sm btn-outline-hms" title="View"><i class="bi bi-eye"></i></a>
+                            <% if (user.role === 'admin') { %>
+                            <a href="/doctors/<%= d.id %>/edit" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+                            <form action="/doctors/<%= d.id %>/delete" method="POST" class="d-inline" data-confirm="Remove Dr. <%= d.name %>? This cannot be undone.">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                            </form>
+                            <% } %>
+                        </td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+        <% } else { %>
+        <div class="hms-empty-state">
+            <i class="bi bi-person-badge"></i>
+            No doctors found.
+        </div>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

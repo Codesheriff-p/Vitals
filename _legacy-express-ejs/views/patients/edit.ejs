@@ -1,0 +1,94 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<% function fmtDate(d) {
+    if (!d) return '';
+    const dt = new Date(d);
+    if (isNaN(dt)) return '';
+    return dt.toISOString().split('T')[0];
+} %>
+
+<div class="hms-page-header">
+    <div>
+        <p class="hms-breadcrumb"><a href="/dashboard">Home</a> / <a href="/patients">Patients</a> / Edit</p>
+        <h1 class="hms-page-title">Edit Patient — <%= patient.first_name %> <%= patient.last_name %></h1>
+    </div>
+</div>
+
+<% if (errors && errors.length) { %>
+<div class="alert alert-danger">
+    <ul class="mb-0 ps-3">
+        <% errors.forEach(e => { %><li><%= e %></li><% }); %>
+    </ul>
+</div>
+<% } %>
+
+<div class="hms-card">
+    <div class="hms-card-body">
+        <form action="/patients/<%= patient.id %>/edit" method="POST">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="first_name" class="form-label hms-required">First Name</label>
+                    <input type="text" class="form-control" id="first_name" name="first_name" value="<%= patient.first_name || '' %>" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="last_name" class="form-label hms-required">Last Name</label>
+                    <input type="text" class="form-control" id="last_name" name="last_name" value="<%= patient.last_name || '' %>" required>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="dob" class="form-label">Date of Birth</label>
+                    <input type="date" class="form-control" id="dob" name="dob" value="<%= fmtDate(patient.dob) %>">
+                </div>
+                <div class="col-md-4">
+                    <label for="gender" class="form-label hms-required">Gender</label>
+                    <select class="form-select" id="gender" name="gender" required>
+                        <option value="">Select...</option>
+                        <option value="male" <%= patient.gender === 'male' ? 'selected' : '' %>>Male</option>
+                        <option value="female" <%= patient.gender === 'female' ? 'selected' : '' %>>Female</option>
+                        <option value="other" <%= patient.gender === 'other' ? 'selected' : '' %>>Other</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="blood_group" class="form-label">Blood Group</label>
+                    <select class="form-select" id="blood_group" name="blood_group">
+                        <option value="">Unknown</option>
+                        <% ['A+','A-','B+','B-','AB+','AB-','O+','O-'].forEach(bg => { %>
+                        <option value="<%= bg %>" <%= patient.blood_group === bg ? 'selected' : '' %>><%= bg %></option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="phone" class="form-label hms-required">Phone</label>
+                    <input type="text" class="form-control" id="phone" name="phone" value="<%= patient.phone || '' %>" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" value="<%= patient.email || '' %>">
+                </div>
+
+                <div class="col-12">
+                    <label for="address" class="form-label">Address</label>
+                    <textarea class="form-control" id="address" name="address" rows="2"><%= patient.address || '' %></textarea>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="next_of_kin" class="form-label">Next of Kin</label>
+                    <input type="text" class="form-control" id="next_of_kin" name="next_of_kin" value="<%= patient.next_of_kin || '' %>">
+                </div>
+                <div class="col-md-6">
+                    <label for="next_of_kin_phone" class="form-label">Next of Kin Phone</label>
+                    <input type="text" class="form-control" id="next_of_kin_phone" name="next_of_kin_phone" value="<%= patient.next_of_kin_phone || '' %>">
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn hms-btn-primary"><i class="bi bi-check-lg me-1"></i> Save Changes</button>
+                <a href="/patients/<%= patient.id %>" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

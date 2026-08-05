@@ -1,0 +1,81 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<div class="hms-page-header">
+    <div>
+        <p class="hms-breadcrumb"><a href="/dashboard">Home</a> / Patients</p>
+        <h1 class="hms-page-title">Patients</h1>
+    </div>
+    <a href="/patients/add" class="btn hms-btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Add Patient
+    </a>
+</div>
+
+<div class="hms-card mb-3">
+    <div class="hms-card-body py-3">
+        <form action="/patients" method="GET" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Search by name, patient #, or phone" value="<%= search %>">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-hms w-100">Search</button>
+            </div>
+            <% if (search) { %>
+            <div class="col-md-2">
+                <a href="/patients" class="btn btn-outline-secondary w-100">Clear</a>
+            </div>
+            <% } %>
+        </form>
+    </div>
+</div>
+
+<div class="hms-card">
+    <div class="hms-card-body">
+        <% if (patients.length) { %>
+        <div class="table-responsive">
+            <table class="table hms-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Patient #</th>
+                        <th>Name</th>
+                        <th>Gender</th>
+                        <th>Blood Group</th>
+                        <th>Phone</th>
+                        <th>Registered</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% patients.forEach(p => { %>
+                    <tr>
+                        <td class="fw-semibold"><%= p.patient_number %></td>
+                        <td><%= p.first_name %> <%= p.last_name %></td>
+                        <td class="text-capitalize"><%= p.gender %></td>
+                        <td><%= p.blood_group || '—' %></td>
+                        <td><%= p.phone %></td>
+                        <td><%= new Date(p.created_at).toLocaleDateString('en-GB') %></td>
+                        <td class="text-end">
+                            <a href="/patients/<%= p.id %>" class="btn btn-sm btn-outline-hms" title="View"><i class="bi bi-eye"></i></a>
+                            <a href="/patients/<%= p.id %>/edit" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+                            <form action="/patients/<%= p.id %>/delete" method="POST" class="d-inline" data-confirm="Delete patient <%= p.patient_number %>? This cannot be undone.">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+        <% } else { %>
+        <div class="hms-empty-state">
+            <i class="bi bi-people"></i>
+            No patients found<% if (search) { %> for "<%= search %>"<% } %>.
+        </div>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

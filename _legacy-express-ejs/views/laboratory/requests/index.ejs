@@ -1,0 +1,72 @@
+<%- include('../../partials/header') %>
+<%- include('../../partials/sidebar') %>
+
+<% function badgeClass(s) {
+    switch (s) {
+        case 'completed': return 'hms-badge-success';
+        case 'processing': return 'hms-badge-info';
+        case 'requested': return 'hms-badge-warning';
+        default: return 'hms-badge-neutral';
+    }
+} %>
+
+<div class="hms-page-header">
+    <div>
+        <p class="hms-breadcrumb"><a href="/dashboard">Home</a> / <a href="/laboratory">Laboratory</a> / Requests</p>
+        <h1 class="hms-page-title">Lab Requests</h1>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/laboratory" class="btn btn-outline-hms"><i class="bi bi-clipboard2-pulse me-1"></i> Test Catalog</a>
+        <% if (['admin','doctor'].includes(user.role)) { %>
+        <a href="/laboratory/requests/add" class="btn hms-btn-primary"><i class="bi bi-plus-lg me-1"></i> New Request</a>
+        <% } %>
+    </div>
+</div>
+
+<div class="hms-card mb-3">
+    <div class="hms-card-body py-3">
+        <form action="/laboratory/requests" method="GET" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    <% ['requested','processing','completed'].forEach(s => { %>
+                    <option value="<%= s %>" <%= status === s ? 'selected' : '' %>><%= s %></option>
+                    <% }); %>
+                </select>
+            </div>
+            <% if (status) { %>
+            <div class="col-md-2"><a href="/laboratory/requests" class="btn btn-outline-secondary w-100">Clear</a></div>
+            <% } %>
+        </form>
+    </div>
+</div>
+
+<div class="hms-card">
+    <div class="hms-card-body">
+        <% if (requests.length) { %>
+        <div class="table-responsive">
+            <table class="table hms-table align-middle">
+                <thead><tr><th>Request #</th><th>Patient</th><th>Doctor</th><th>Status</th><th>Date</th><th class="text-end">Actions</th></tr></thead>
+                <tbody>
+                    <% requests.forEach(r => { %>
+                    <tr>
+                        <td class="fw-semibold"><%= r.request_number %></td>
+                        <td><%= r.patient_first_name %> <%= r.patient_last_name %> <span class="text-muted small">(<%= r.patient_number %>)</span></td>
+                        <td>Dr. <%= r.doctor_name %></td>
+                        <td><span class="hms-badge <%= badgeClass(r.status) %>"><%= r.status %></span></td>
+                        <td><%= new Date(r.created_at).toLocaleDateString('en-GB') %></td>
+                        <td class="text-end">
+                            <a href="/laboratory/requests/<%= r.id %>" class="btn btn-sm btn-outline-hms" title="View"><i class="bi bi-eye"></i></a>
+                        </td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+        <% } else { %>
+        <div class="hms-empty-state"><i class="bi bi-clipboard2-pulse"></i>No lab requests found.</div>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

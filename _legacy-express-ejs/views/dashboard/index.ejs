@@ -1,0 +1,377 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<div class="hms-page-header">
+    <div>
+        <p class="hms-breadcrumb">Home / Dashboard</p>
+        <h1 class="hms-page-title">Welcome back, <%= user.name.split(' ')[0] %></h1>
+    </div>
+</div>
+
+<% function money(n) { return '₦' + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); } %>
+<% function fullName(f, l) { return f + ' ' + l; } %>
+<% function badgeClass(status) {
+    switch (status) {
+        case 'completed': case 'dispensed': case 'paid': case 'active': return 'hms-badge-success';
+        case 'scheduled': case 'pending': case 'processing': case 'requested': case 'partial': return 'hms-badge-warning';
+        case 'cancelled': case 'no-show': case 'unpaid': case 'inactive': return 'hms-badge-danger';
+        default: return 'hms-badge-neutral';
+    }
+} %>
+
+<% if (role === 'admin') { %>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="hms-stat-card">
+                <div class="hms-stat-icon bg-icon-primary"><i class="bi bi-people-fill"></i></div>
+                <div>
+                    <div class="hms-stat-value"><%= stats.totalPatients ?? 0 %></div>
+                    <div class="hms-stat-label">Total Patients</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="hms-stat-card">
+                <div class="hms-stat-icon bg-icon-secondary"><i class="bi bi-calendar2-check-fill"></i></div>
+                <div>
+                    <div class="hms-stat-value"><%= stats.todayAppointments ?? 0 %></div>
+                    <div class="hms-stat-label">Today's Appointments</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="hms-stat-card">
+                <div class="hms-stat-icon bg-icon-success"><i class="bi bi-person-badge-fill"></i></div>
+                <div>
+                    <div class="hms-stat-value"><%= stats.totalDoctors ?? 0 %></div>
+                    <div class="hms-stat-label">Active Doctors</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="hms-stat-card">
+                <div class="hms-stat-icon bg-icon-warning"><i class="bi bi-clipboard2-pulse-fill"></i></div>
+                <div>
+                    <div class="hms-stat-value"><%= stats.pendingLabRequests ?? 0 %></div>
+                    <div class="hms-stat-label">Pending Lab Requests</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="hms-stat-card">
+                <div class="hms-stat-icon bg-icon-danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                <div>
+                    <div class="hms-stat-value"><%= stats.lowStockCount ?? 0 %></div>
+                    <div class="hms-stat-label">Low Stock Drugs</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="hms-stat-card">
+                <div class="hms-stat-icon bg-icon-danger"><i class="bi bi-receipt"></i></div>
+                <div>
+                    <div class="hms-stat-value"><%= stats.unpaidBillsCount ?? 0 %></div>
+                    <div class="hms-stat-label">Unpaid / Partial Bills</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="hms-stat-card">
+                <div class="hms-stat-icon bg-icon-primary"><i class="bi bi-cash-stack"></i></div>
+                <div>
+                    <div class="hms-stat-value"><%= money(stats.outstandingAmount) %></div>
+                    <div class="hms-stat-label">Outstanding Balance</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-lg-5">
+            <div class="hms-card h-100">
+                <div class="hms-card-body">
+                    <h6 class="fw-semibold mb-3">Appointment Status Breakdown</h6>
+                    <canvas id="statusChart" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="hms-card h-100">
+                <div class="hms-card-body">
+                    <h6 class="fw-semibold mb-3">Revenue — Last 6 Months</h6>
+                    <canvas id="revenueChart" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hms-card">
+        <div class="hms-card-body">
+            <h6 class="fw-semibold mb-3">Recent Appointments</h6>
+            <% if (stats.recentAppointments && stats.recentAppointments.length) { %>
+            <div class="table-responsive">
+                <table class="table hms-table align-middle">
+                    <thead><tr><th>Appt #</th><th>Patient</th><th>Doctor</th><th>Date</th><th>Time</th><th>Status</th></tr></thead>
+                    <tbody>
+                        <% stats.recentAppointments.forEach(a => { %>
+                        <tr>
+                            <td><%= a.appointment_number %></td>
+                            <td><%= fullName(a.patient_first_name, a.patient_last_name) %></td>
+                            <td><%= a.doctor_name %></td>
+                            <td><%= new Date(a.appointment_date).toLocaleDateString('en-GB') %></td>
+                            <td><%= a.appointment_time %></td>
+                            <td><span class="hms-badge <%= badgeClass(a.status) %>"><%= a.status %></span></td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+            <% } else { %>
+            <div class="hms-empty-state"><i class="bi bi-calendar-x"></i>No appointments yet.</div>
+            <% } %>
+        </div>
+    </div>
+
+<% } else if (role === 'doctor') { %>
+
+    <% if (stats.noDoctorProfile) { %>
+        <div class="alert alert-warning">Your account is not linked to a doctor profile. Contact an administrator.</div>
+    <% } else { %>
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-4">
+            <div class="hms-stat-card">
+                <div class="hms-stat-icon bg-icon-primary"><i class="bi bi-calendar2-check-fill"></i></div>
+                <div>
+                    <div class="hms-stat-value"><%= stats.todayAppointments ?? 0 %></div>
+                    <div class="hms-stat-label">Today's Appointments</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-4">
+            <div class="hms-stat-card">
+                <div class="hms-stat-icon bg-icon-success"><i class="bi bi-people-fill"></i></div>
+                <div>
+                    <div class="hms-stat-value"><%= stats.myPatients ?? 0 %></div>
+                    <div class="hms-stat-label">Patients Seen</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-4">
+            <div class="hms-stat-card">
+                <div class="hms-stat-icon bg-icon-warning"><i class="bi bi-clipboard2-pulse-fill"></i></div>
+                <div>
+                    <div class="hms-stat-value"><%= stats.pendingLabRequests ?? 0 %></div>
+                    <div class="hms-stat-label">Pending Lab Requests</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hms-card">
+        <div class="hms-card-body">
+            <h6 class="fw-semibold mb-3">Today's Schedule</h6>
+            <% if (stats.todayList && stats.todayList.length) { %>
+            <div class="table-responsive">
+                <table class="table hms-table align-middle">
+                    <thead><tr><th>Time</th><th>Patient</th><th>Patient #</th><th>Type</th><th>Status</th></tr></thead>
+                    <tbody>
+                        <% stats.todayList.forEach(a => { %>
+                        <tr>
+                            <td><%= a.appointment_time %></td>
+                            <td><%= fullName(a.patient_first_name, a.patient_last_name) %></td>
+                            <td><%= a.patient_number %></td>
+                            <td><%= a.type %></td>
+                            <td><span class="hms-badge <%= badgeClass(a.status) %>"><%= a.status %></span></td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+            <% } else { %>
+            <div class="hms-empty-state"><i class="bi bi-calendar-x"></i>No appointments scheduled for today.</div>
+            <% } %>
+        </div>
+    </div>
+    <% } %>
+
+<% } else if (role === 'pharmacist') { %>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-4">
+            <div class="hms-stat-card">
+                <div class="hms-stat-icon bg-icon-warning"><i class="bi bi-file-earmark-medical-fill"></i></div>
+                <div>
+                    <div class="hms-stat-value"><%= stats.pendingPrescriptions ?? 0 %></div>
+                    <div class="hms-stat-label">Pending Prescriptions</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-4">
+            <div class="hms-stat-card">
+                <div class="hms-stat-icon bg-icon-danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                <div>
+                    <div class="hms-stat-value"><%= stats.lowStockCount ?? 0 %></div>
+                    <div class="hms-stat-label">Low Stock Drugs</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hms-card">
+        <div class="hms-card-body">
+            <h6 class="fw-semibold mb-3">Low Stock Alerts</h6>
+            <% if (stats.lowStockList && stats.lowStockList.length) { %>
+            <div class="table-responsive">
+                <table class="table hms-table align-middle">
+                    <thead><tr><th>Drug</th><th>In Stock</th><th>Reorder Level</th></tr></thead>
+                    <tbody>
+                        <% stats.lowStockList.forEach(d => { %>
+                        <tr>
+                            <td><%= d.drug_name %></td>
+                            <td class="hms-low-stock"><%= d.quantity_in_stock %></td>
+                            <td><%= d.reorder_level %></td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+            <% } else { %>
+            <div class="hms-empty-state"><i class="bi bi-check2-circle"></i>All drug stock levels are healthy.</div>
+            <% } %>
+        </div>
+    </div>
+
+<% } else if (role === 'lab_technician') { %>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-4">
+            <div class="hms-stat-card">
+                <div class="hms-stat-icon bg-icon-warning"><i class="bi bi-clipboard2-pulse-fill"></i></div>
+                <div>
+                    <div class="hms-stat-value"><%= stats.pendingLabRequests ?? 0 %></div>
+                    <div class="hms-stat-label">Pending Lab Requests</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hms-card">
+        <div class="hms-card-body">
+            <h6 class="fw-semibold mb-3">Pending Requests</h6>
+            <% if (stats.pendingList && stats.pendingList.length) { %>
+            <div class="table-responsive">
+                <table class="table hms-table align-middle">
+                    <thead><tr><th>Request #</th><th>Patient</th><th>Status</th><th>Requested</th></tr></thead>
+                    <tbody>
+                        <% stats.pendingList.forEach(r => { %>
+                        <tr>
+                            <td><%= r.request_number %></td>
+                            <td><%= fullName(r.patient_first_name, r.patient_last_name) %></td>
+                            <td><span class="hms-badge <%= badgeClass(r.status) %>"><%= r.status %></span></td>
+                            <td><%= new Date(r.created_at).toLocaleDateString('en-GB') %></td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+            <% } else { %>
+            <div class="hms-empty-state"><i class="bi bi-check2-circle"></i>No pending lab requests.</div>
+            <% } %>
+        </div>
+    </div>
+
+<% } else { %>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-4">
+            <div class="hms-stat-card">
+                <div class="hms-stat-icon bg-icon-primary"><i class="bi bi-calendar2-check-fill"></i></div>
+                <div>
+                    <div class="hms-stat-value"><%= stats.todayAppointments ?? 0 %></div>
+                    <div class="hms-stat-label">Today's Appointments</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-4">
+            <div class="hms-stat-card">
+                <div class="hms-stat-icon bg-icon-success"><i class="bi bi-people-fill"></i></div>
+                <div>
+                    <div class="hms-stat-value"><%= stats.totalPatients ?? 0 %></div>
+                    <div class="hms-stat-label">Total Patients</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-4">
+            <div class="hms-stat-card">
+                <div class="hms-stat-icon bg-icon-danger"><i class="bi bi-receipt"></i></div>
+                <div>
+                    <div class="hms-stat-value"><%= stats.unpaidBillsCount ?? 0 %></div>
+                    <div class="hms-stat-label">Unpaid / Partial Bills</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hms-card">
+        <div class="hms-card-body">
+            <h6 class="fw-semibold mb-3">Today's Schedule</h6>
+            <% if (stats.todayList && stats.todayList.length) { %>
+            <div class="table-responsive">
+                <table class="table hms-table align-middle">
+                    <thead><tr><th>Time</th><th>Patient</th><th>Doctor</th><th>Status</th></tr></thead>
+                    <tbody>
+                        <% stats.todayList.forEach(a => { %>
+                        <tr>
+                            <td><%= a.appointment_time %></td>
+                            <td><%= fullName(a.patient_first_name, a.patient_last_name) %></td>
+                            <td><%= a.doctor_name %></td>
+                            <td><span class="hms-badge <%= badgeClass(a.status) %>"><%= a.status %></span></td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+            <% } else { %>
+            <div class="hms-empty-state"><i class="bi bi-calendar-x"></i>No appointments scheduled for today.</div>
+            <% } %>
+        </div>
+    </div>
+
+<% } %>
+
+<% if (role === 'admin') { %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+    const statusLabels = <%- JSON.stringify((stats.statusBreakdown || []).map(s => s.status)) %>;
+    const statusData = <%- JSON.stringify((stats.statusBreakdown || []).map(s => s.total)) %>;
+    new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                data: statusData,
+                backgroundColor: ['#2e86c1', '#1e8449', '#c0392b', '#d68910']
+            }]
+        },
+        options: { plugins: { legend: { position: 'bottom' } } }
+    });
+
+    const revenueLabels = <%- JSON.stringify((stats.monthlyRevenue || []).map(r => r.month)) %>;
+    const revenueData = <%- JSON.stringify((stats.monthlyRevenue || []).map(r => Number(r.total))) %>;
+    new Chart(document.getElementById('revenueChart'), {
+        type: 'bar',
+        data: {
+            labels: revenueLabels,
+            datasets: [{
+                label: 'Revenue (₦)',
+                data: revenueData,
+                backgroundColor: '#1a5276'
+            }]
+        },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+</script>
+<% } %>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,74 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<div class="hms-page-header">
+    <div>
+        <p class="hms-breadcrumb"><a href="/dashboard">Home</a> / <a href="/doctors">Doctors</a> / Edit</p>
+        <h1 class="hms-page-title">Edit Doctor — Dr. <%= doctor.name %></h1>
+    </div>
+</div>
+
+<% if (errors && errors.length) { %>
+<div class="alert alert-danger">
+    <ul class="mb-0 ps-3">
+        <% errors.forEach(e => { %><li><%= e %></li><% }); %>
+    </ul>
+</div>
+<% } %>
+
+<div class="hms-card">
+    <div class="hms-card-body">
+        <form action="/doctors/<%= doctor.id %>/edit" method="POST">
+            <h6 class="fw-semibold mb-3">Account Details</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label for="name" class="form-label hms-required">Full Name</label>
+                    <input type="text" class="form-control" id="name" name="name" value="<%= doctor.name || '' %>" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="email" class="form-label hms-required">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" value="<%= doctor.email || '' %>" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="status" class="form-label">Account Status</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="active" <%= doctor.account_status === 'active' ? 'selected' : '' %>>Active</option>
+                        <option value="inactive" <%= doctor.account_status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <h6 class="fw-semibold mb-3">Professional Details</h6>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="specialization" class="form-label hms-required">Specialization</label>
+                    <input type="text" class="form-control" id="specialization" name="specialization" value="<%= doctor.specialization || '' %>" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="department_id" class="form-label">Department</label>
+                    <select class="form-select" id="department_id" name="department_id">
+                        <option value="">Unassigned</option>
+                        <% departments.forEach(d => { %>
+                        <option value="<%= d.id %>" <%= String(doctor.department_id) === String(d.id) ? 'selected' : '' %>><%= d.name %></option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="qualification" class="form-label">Qualification</label>
+                    <input type="text" class="form-control" id="qualification" name="qualification" value="<%= doctor.qualification || '' %>">
+                </div>
+                <div class="col-md-6">
+                    <label for="phone" class="form-label">Phone</label>
+                    <input type="text" class="form-control" id="phone" name="phone" value="<%= doctor.phone || '' %>">
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn hms-btn-primary"><i class="bi bi-check-lg me-1"></i> Save Changes</button>
+                <a href="/doctors/<%= doctor.id %>" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

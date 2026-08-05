@@ -1,0 +1,81 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<% function roleLabel(r) { return r ? r.replace('_', ' ') : ''; } %>
+
+<div class="hms-page-header">
+    <div>
+        <p class="hms-breadcrumb"><a href="/dashboard">Home</a> / Staff</p>
+        <h1 class="hms-page-title">Staff</h1>
+    </div>
+    <a href="/staff/add" class="btn hms-btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Add Staff
+    </a>
+</div>
+
+<div class="hms-card mb-3">
+    <div class="hms-card-body py-3">
+        <form action="/staff" method="GET" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <select name="role" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Roles</option>
+                    <% STAFF_ROLES.forEach(r => { %>
+                    <option value="<%= r %>" <%= roleFilter === r ? 'selected' : '' %> class="text-capitalize"><%= roleLabel(r) %></option>
+                    <% }); %>
+                </select>
+            </div>
+            <% if (roleFilter) { %>
+            <div class="col-md-2">
+                <a href="/staff" class="btn btn-outline-secondary w-100">Clear</a>
+            </div>
+            <% } %>
+        </form>
+    </div>
+</div>
+
+<div class="hms-card">
+    <div class="hms-card-body">
+        <% if (staff.length) { %>
+        <div class="table-responsive">
+            <table class="table hms-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Title</th>
+                        <th>Department</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% staff.forEach(s => { %>
+                    <tr>
+                        <td class="fw-semibold"><%= s.name %></td>
+                        <td class="text-capitalize"><%= roleLabel(s.role) %></td>
+                        <td><%= s.role_title || '—' %></td>
+                        <td><%= s.department_name || '—' %></td>
+                        <td><%= s.phone || '—' %></td>
+                        <td><span class="hms-badge <%= s.status === 'active' ? 'hms-badge-success' : 'hms-badge-danger' %>"><%= s.status %></span></td>
+                        <td class="text-end">
+                            <a href="/staff/<%= s.id %>/edit" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+                            <form action="/staff/<%= s.id %>/delete" method="POST" class="d-inline" data-confirm="Remove <%= s.name %> from staff?">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+        <% } else { %>
+        <div class="hms-empty-state">
+            <i class="bi bi-person-workspace"></i>
+            No staff members found.
+        </div>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

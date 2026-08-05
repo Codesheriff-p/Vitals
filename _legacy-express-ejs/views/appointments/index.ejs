@@ -1,0 +1,101 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<% function badgeClass(s) {
+    switch (s) {
+        case 'completed': return 'hms-badge-success';
+        case 'scheduled': return 'hms-badge-warning';
+        case 'cancelled': case 'no-show': return 'hms-badge-danger';
+        default: return 'hms-badge-neutral';
+    }
+} %>
+<% const canManage = ['admin','nurse','receptionist'].includes(user.role); %>
+
+<div class="hms-page-header">
+    <div>
+        <p class="hms-breadcrumb"><a href="/dashboard">Home</a> / Appointments</p>
+        <h1 class="hms-page-title">Appointments</h1>
+    </div>
+    <% if (canManage) { %>
+    <a href="/appointments/add" class="btn hms-btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> New Appointment
+    </a>
+    <% } %>
+</div>
+
+<div class="hms-card mb-3">
+    <div class="hms-card-body py-3">
+        <form action="/appointments" method="GET" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    <% ['scheduled','completed','cancelled','no-show'].forEach(s => { %>
+                    <option value="<%= s %>" <%= status === s ? 'selected' : '' %>><%= s %></option>
+                    <% }); %>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="date" name="date" class="form-control" value="<%= date %>" onchange="this.form.submit()">
+            </div>
+            <% if (status || date) { %>
+            <div class="col-md-2">
+                <a href="/appointments" class="btn btn-outline-secondary w-100">Clear</a>
+            </div>
+            <% } %>
+        </form>
+    </div>
+</div>
+
+<div class="hms-card">
+    <div class="hms-card-body">
+        <% if (appointments.length) { %>
+        <div class="table-responsive">
+            <table class="table hms-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Appt #</th>
+                        <th>Patient</th>
+                        <th>Doctor</th>
+                        <th>Department</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% appointments.forEach(a => { %>
+                    <tr>
+                        <td class="fw-semibold"><%= a.appointment_number %></td>
+                        <td><%= a.patient_first_name %> <%= a.patient_last_name %><br><span class="text-muted small"><%= a.patient_number %></span></td>
+                        <td>Dr. <%= a.doctor_name %></td>
+                        <td><%= a.department_name || '—' %></td>
+                        <td><%= new Date(a.appointment_date).toLocaleDateString('en-GB') %></td>
+                        <td><%= a.appointment_time %></td>
+                        <td><%= a.type %></td>
+                        <td><span class="hms-badge <%= badgeClass(a.status) %>"><%= a.status %></span></td>
+                        <td class="text-end">
+                            <a href="/appointments/<%= a.id %>" class="btn btn-sm btn-outline-hms" title="View"><i class="bi bi-eye"></i></a>
+                            <a href="/appointments/<%= a.id %>/edit" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+                            <% if (['admin','receptionist'].includes(user.role)) { %>
+                            <form action="/appointments/<%= a.id %>/delete" method="POST" class="d-inline" data-confirm="Delete appointment <%= a.appointment_number %>?">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                            </form>
+                            <% } %>
+                        </td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+        <% } else { %>
+        <div class="hms-empty-state">
+            <i class="bi bi-calendar-x"></i>
+            No appointments found.
+        </div>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

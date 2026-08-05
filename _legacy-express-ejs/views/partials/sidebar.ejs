@@ -1,0 +1,102 @@
+<%
+// Local helper — is the current path inside this section?
+const isActive = (base) => (typeof currentPath !== 'undefined' && (currentPath === base || currentPath.startsWith(base + '/')));
+const role = (typeof user !== 'undefined' && user) ? user.role : null;
+%>
+
+<aside class="hms-sidebar" id="hmsSidebar">
+    <nav class="hms-sidebar-nav">
+
+        <div class="hms-nav-section">
+            <p class="hms-nav-heading">Overview</p>
+            <a href="/dashboard" class="hms-nav-link <%= isActive('/dashboard') ? 'active' : '' %>">
+                <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+            </a>
+        </div>
+
+        <% if (['admin','doctor','nurse','receptionist'].includes(role)) { %>
+        <div class="hms-nav-section">
+            <p class="hms-nav-heading">Clinical</p>
+            <a href="/patients" class="hms-nav-link <%= isActive('/patients') ? 'active' : '' %>">
+                <i class="bi bi-people"></i><span>Patients</span>
+            </a>
+            <a href="/appointments" class="hms-nav-link <%= isActive('/appointments') ? 'active' : '' %>">
+                <i class="bi bi-calendar2-check"></i><span>Appointments</span>
+            </a>
+            <% if (['admin','receptionist'].includes(role)) { %>
+            <a href="/doctors" class="hms-nav-link <%= isActive('/doctors') ? 'active' : '' %>">
+                <i class="bi bi-person-badge"></i><span>Doctors</span>
+            </a>
+            <% } %>
+        </div>
+        <% } %>
+
+        <% if (['admin','pharmacist','doctor'].includes(role)) { %>
+        <div class="hms-nav-section">
+            <p class="hms-nav-heading">Pharmacy</p>
+            <a href="/pharmacy" class="hms-nav-link <%= isActive('/pharmacy') ? 'active' : '' %>">
+                <i class="bi bi-capsule"></i><span>Pharmacy</span>
+            </a>
+        </div>
+        <% } %>
+
+        <% if (['admin','lab_technician','doctor'].includes(role)) { %>
+        <div class="hms-nav-section">
+            <p class="hms-nav-heading">Laboratory</p>
+            <a href="/laboratory" class="hms-nav-link <%= isActive('/laboratory') ? 'active' : '' %>">
+                <i class="bi bi-clipboard2-pulse"></i><span>Laboratory</span>
+            </a>
+        </div>
+        <% } %>
+
+        <% if (['admin','receptionist'].includes(role)) { %>
+        <div class="hms-nav-section">
+            <p class="hms-nav-heading">Finance</p>
+            <a href="/billing" class="hms-nav-link <%= isActive('/billing') ? 'active' : '' %>">
+                <i class="bi bi-receipt"></i><span>Billing</span>
+            </a>
+        </div>
+        <% } %>
+
+        <% if (role === 'admin') { %>
+        <div class="hms-nav-section">
+            <p class="hms-nav-heading">Administration</p>
+            <a href="/staff" class="hms-nav-link <%= isActive('/staff') ? 'active' : '' %>">
+                <i class="bi bi-person-workspace"></i><span>Staff</span>
+            </a>
+            <a href="/departments" class="hms-nav-link <%= isActive('/departments') ? 'active' : '' %>">
+                <i class="bi bi-diagram-3"></i><span>Departments</span>
+            </a>
+            <a href="/reports" class="hms-nav-link <%= isActive('/reports') ? 'active' : '' %>">
+                <i class="bi bi-bar-chart-line"></i><span>Reports</span>
+            </a>
+            <a href="/users" class="hms-nav-link <%= isActive('/users') ? 'active' : '' %>">
+                <i class="bi bi-shield-lock"></i><span>Users</span>
+            </a>
+        </div>
+        <% } %>
+
+    </nav>
+</aside>
+
+<div class="hms-sidebar-backdrop" id="hmsSidebarBackdrop"></div>
+
+<main class="hms-main-content" id="hmsMainContent">
+
+    <% if (typeof success !== 'undefined' && success.length) { %>
+        <% success.forEach(function (msg) { %>
+        <div class="alert alert-success alert-dismissible fade show hms-alert-auto" role="alert">
+            <i class="bi bi-check-circle me-1"></i> <%= msg %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <% }); %>
+    <% } %>
+
+    <% if (typeof error !== 'undefined' && error.length) { %>
+        <% error.forEach(function (msg) { %>
+        <div class="alert alert-danger alert-dismissible fade show hms-alert-auto" role="alert">
+            <i class="bi bi-exclamation-triangle me-1"></i> <%= msg %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <% }); %>
+    <% } %>

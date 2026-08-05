@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Archived pre-rewrite Express/EJS prototype — not part of the Next.js app.
+    "_legacy-express-ejs/**",
   ]),
 ]);
 

@@ -1,0 +1,84 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<div class="hms-page-header">
+    <div>
+        <p class="hms-breadcrumb"><a href="/dashboard">Home</a> / Pharmacy</p>
+        <h1 class="hms-page-title">Drug Inventory</h1>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/pharmacy/prescriptions" class="btn btn-outline-hms"><i class="bi bi-file-earmark-medical me-1"></i> Prescriptions</a>
+        <% if (['admin','pharmacist'].includes(user.role)) { %>
+        <a href="/pharmacy/add" class="btn hms-btn-primary"><i class="bi bi-plus-lg me-1"></i> Add Drug</a>
+        <% } %>
+    </div>
+</div>
+
+<div class="hms-card mb-3">
+    <div class="hms-card-body py-3">
+        <form action="/pharmacy" method="GET" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Search by drug name or category" value="<%= search %>">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-hms w-100">Search</button>
+            </div>
+            <% if (search) { %>
+            <div class="col-md-2"><a href="/pharmacy" class="btn btn-outline-secondary w-100">Clear</a></div>
+            <% } %>
+        </form>
+    </div>
+</div>
+
+<div class="hms-card">
+    <div class="hms-card-body">
+        <% if (drugs.length) { %>
+        <div class="table-responsive">
+            <table class="table hms-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Drug Name</th>
+                        <th>Category</th>
+                        <th>Unit</th>
+                        <th>Unit Price</th>
+                        <th>In Stock</th>
+                        <th>Reorder Level</th>
+                        <% if (['admin','pharmacist'].includes(user.role)) { %><th class="text-end">Actions</th><% } %>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% drugs.forEach(d => { %>
+                    <% const low = d.quantity_in_stock <= d.reorder_level; %>
+                    <tr>
+                        <td class="fw-semibold"><%= d.drug_name %></td>
+                        <td><%= d.category || '—' %></td>
+                        <td><%= d.unit || '—' %></td>
+                        <td>₦<%= Number(d.unit_price).toLocaleString('en-NG', {minimumFractionDigits: 2}) %></td>
+                        <td class="<%= low ? 'hms-low-stock' : '' %>">
+                            <%= d.quantity_in_stock %>
+                            <% if (low) { %><i class="bi bi-exclamation-triangle-fill ms-1" title="Low stock"></i><% } %>
+                        </td>
+                        <td><%= d.reorder_level %></td>
+                        <% if (['admin','pharmacist'].includes(user.role)) { %>
+                        <td class="text-end">
+                            <a href="/pharmacy/<%= d.id %>/edit" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+                            <form action="/pharmacy/<%= d.id %>/delete" method="POST" class="d-inline" data-confirm="Delete <%= d.drug_name %> from inventory?">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                        <% } %>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+        <% } else { %>
+        <div class="hms-empty-state"><i class="bi bi-capsule"></i>No drugs found.</div>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

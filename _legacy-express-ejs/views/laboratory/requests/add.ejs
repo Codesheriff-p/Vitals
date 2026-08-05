@@ -1,0 +1,68 @@
+<%- include('../../partials/header') %>
+<%- include('../../partials/sidebar') %>
+
+<div class="hms-page-header">
+    <div>
+        <p class="hms-breadcrumb"><a href="/dashboard">Home</a> / <a href="/laboratory">Laboratory</a> / <a href="/laboratory/requests">Requests</a> / New</p>
+        <h1 class="hms-page-title">New Lab Request</h1>
+    </div>
+</div>
+
+<% if (errors && errors.length) { %>
+<div class="alert alert-danger">
+    <ul class="mb-0 ps-3"><% errors.forEach(e => { %><li><%= e %></li><% }); %></ul>
+</div>
+<% } %>
+
+<div class="hms-card">
+    <div class="hms-card-body">
+        <form action="/laboratory/requests/add" method="POST">
+            <input type="hidden" name="appointment_id" value="<%= formData.appointment_id || '' %>">
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label for="patient_id" class="form-label hms-required">Patient</label>
+                    <select class="form-select" id="patient_id" name="patient_id" required>
+                        <option value="">Select patient...</option>
+                        <% patients.forEach(p => { %>
+                        <option value="<%= p.id %>" <%= String(formData.patient_id) === String(p.id) ? 'selected' : '' %>>
+                            <%= p.first_name %> <%= p.last_name %> (<%= p.patient_number %>)
+                        </option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="doctor_id" class="form-label hms-required">Requesting Doctor</label>
+                    <select class="form-select" id="doctor_id" name="doctor_id" required>
+                        <option value="">Select doctor...</option>
+                        <% doctors.forEach(d => { %>
+                        <option value="<%= d.id %>" <%= String(formData.doctor_id) === String(d.id) ? 'selected' : '' %>>Dr. <%= d.name %></option>
+                        <% }); %>
+                    </select>
+                </div>
+            </div>
+
+            <h6 class="fw-semibold mb-3">Select Tests</h6>
+            <div class="row g-2">
+                <% tests.forEach(t => { %>
+                <div class="col-md-4">
+                    <div class="form-check border rounded p-2">
+                        <input class="form-check-input" type="checkbox" name="test_id" value="<%= t.id %>" id="test_<%= t.id %>">
+                        <label class="form-check-label d-flex justify-content-between w-100" for="test_<%= t.id %>">
+                            <span><%= t.test_name %></span>
+                            <span class="text-muted small">₦<%= Number(t.price).toLocaleString('en-NG', {minimumFractionDigits: 2}) %></span>
+                        </label>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn hms-btn-primary"><i class="bi bi-check-lg me-1"></i> Save Request</button>
+                <a href="/laboratory/requests" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

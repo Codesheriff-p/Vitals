@@ -1,0 +1,69 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<% function badgeClass(s) {
+    switch (s) {
+        case 'paid': return 'hms-badge-success';
+        case 'partial': return 'hms-badge-warning';
+        case 'unpaid': return 'hms-badge-danger';
+        default: return 'hms-badge-neutral';
+    }
+} %>
+
+<div class="hms-page-header">
+    <div>
+        <p class="hms-breadcrumb"><a href="/dashboard">Home</a> / Billing</p>
+        <h1 class="hms-page-title">Billing</h1>
+    </div>
+    <a href="/billing/add" class="btn hms-btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> New Bill
+    </a>
+</div>
+
+<div class="hms-card mb-3">
+    <div class="hms-card-body py-3">
+        <form action="/billing" method="GET" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    <% ['unpaid','partial','paid'].forEach(s => { %>
+                    <option value="<%= s %>" <%= status === s ? 'selected' : '' %>><%= s %></option>
+                    <% }); %>
+                </select>
+            </div>
+            <% if (status) { %>
+            <div class="col-md-2"><a href="/billing" class="btn btn-outline-secondary w-100">Clear</a></div>
+            <% } %>
+        </form>
+    </div>
+</div>
+
+<div class="hms-card">
+    <div class="hms-card-body">
+        <% if (bills.length) { %>
+        <div class="table-responsive">
+            <table class="table hms-table align-middle">
+                <thead><tr><th>Bill #</th><th>Patient</th><th>Total</th><th>Status</th><th>Date</th><th class="text-end">Actions</th></tr></thead>
+                <tbody>
+                    <% bills.forEach(b => { %>
+                    <tr>
+                        <td class="fw-semibold"><%= b.bill_number %></td>
+                        <td><%= b.patient_first_name %> <%= b.patient_last_name %> <span class="text-muted small">(<%= b.patient_number %>)</span></td>
+                        <td>₦<%= Number(b.total).toLocaleString('en-NG', {minimumFractionDigits: 2}) %></td>
+                        <td><span class="hms-badge <%= badgeClass(b.status) %>"><%= b.status %></span></td>
+                        <td><%= new Date(b.created_at).toLocaleDateString('en-GB') %></td>
+                        <td class="text-end">
+                            <a href="/billing/<%= b.id %>" class="btn btn-sm btn-outline-hms" title="View"><i class="bi bi-eye"></i></a>
+                        </td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+        <% } else { %>
+        <div class="hms-empty-state"><i class="bi bi-receipt"></i>No bills found.</div>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

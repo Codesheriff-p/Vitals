@@ -1,0 +1,50 @@
+<%- include('../partials/header') %>
+<%- include('../partials/sidebar') %>
+
+<div class="hms-page-header">
+    <div>
+        <p class="hms-breadcrumb"><a href="/dashboard">Home</a> / <a href="/departments">Departments</a> / Add</p>
+        <h1 class="hms-page-title">Add Department</h1>
+    </div>
+</div>
+
+<% if (errors && errors.length) { %>
+<div class="alert alert-danger">
+    <ul class="mb-0 ps-3">
+        <% errors.forEach(e => { %><li><%= e %></li><% }); %>
+    </ul>
+</div>
+<% } %>
+
+<div class="hms-card">
+    <div class="hms-card-body">
+        <form action="/departments/add" method="POST">
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label for="name" class="form-label hms-required">Department Name</label>
+                    <input type="text" class="form-control" id="name" name="name" value="<%= formData.name || '' %>" required>
+                </div>
+                <div class="col-md-4">
+                    <label for="head_doctor_id" class="form-label">Head of Department</label>
+                    <select class="form-select" id="head_doctor_id" name="head_doctor_id">
+                        <option value="">Unassigned</option>
+                        <% doctors.forEach(doc => { %>
+                        <option value="<%= doc.id %>" <%= String(formData.head_doctor_id) === String(doc.id) ? 'selected' : '' %>>Dr. <%= doc.name %></option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="3"><%= formData.description || '' %></textarea>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn hms-btn-primary"><i class="bi bi-check-lg me-1"></i> Save Department</button>
+                <a href="/departments" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
