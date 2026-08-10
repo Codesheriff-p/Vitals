@@ -9,7 +9,7 @@ import PasswordInput from "@/components/auth/PasswordInput";
 const initialState: LoginState = {};
 const ERROR_DISMISS_MS = 5000;
 
-export default function LoginForm() {
+export default function LoginForm({ next }: { next?: string }) {
   const [state, formAction, pending] = useActionState(login, initialState);
   const [dismissed, setDismissed] = useState<LoginState | null>(null);
 
@@ -25,6 +25,8 @@ export default function LoginForm() {
     <div className="space-y-4">
       <form action={formAction} className="space-y-4">
         {showError && <div className={authErrorClass}>{state.error}</div>}
+
+        {next && <input type="hidden" name="next" value={next} />}
 
         <div>
           <label htmlFor="email" className={authLabelClass}>

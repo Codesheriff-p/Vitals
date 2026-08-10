@@ -49,18 +49,3 @@ export async function sendSignupCodeEmail(to: string, name: string, code: string
     `
   );
 }
-
-export async function sendLoginCodeEmail(to: string, name: string, code: string) {
-  await sendCodeEmail(
-    to,
-    `${code} is your VITALS HMS sign-in code`,
-    `
-      <div style="font-family: -apple-system, sans-serif; max-width: 420px; margin: 0 auto;">
-        <p>Hi ${name.split(" ")[0]},</p>
-        <p>Enter this code to finish signing in to VITALS HMS:</p>
-        <p style="font-size: 32px; font-weight: 700; letter-spacing: 0.15em; margin: 24px 0;">${code}</p>
-        <p style="color: #64748b; font-size: 13px;">This code expires in 10 minutes. If you didn't try to sign in, you can ignore this email — your password wasn't shared and your account stays safe.</p>
-      </div>
-    `
-  );
-}

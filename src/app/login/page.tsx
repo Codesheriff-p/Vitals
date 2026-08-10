@@ -17,6 +17,9 @@ export default async function LoginPage({
   if (user) redirect("/dashboard");
 
   const params = await searchParams;
+  // proxy.ts appends ?next=<path> when it bounces an unauthenticated request
+  // here, so sign-in can land back on the page that was originally asked for.
+  const nextParam = Array.isArray(params.next) ? params.next[0] : params.next;
 
   return (
     <AuthShell
@@ -30,7 +33,7 @@ export default async function LoginPage({
       }
     >
       <FlashMessages searchParams={params} />
-      <LoginForm />
+      <LoginForm next={nextParam} />
     </AuthShell>
   );
 }

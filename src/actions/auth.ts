@@ -12,12 +12,9 @@ import {
   setPendingSignupCookie,
   getPendingSignup,
   clearPendingSignupCookie,
-  setPendingLoginCookie,
-  getPendingLogin,
-  clearPendingLoginCookie,
 } from "@/lib/auth";
 import { isSelfServiceRole } from "@/lib/userRoles";
-import { sendSignupCodeEmail, sendLoginCodeEmail } from "@/lib/email";
+import { sendSignupCodeEmail } from "@/lib/email";
 import type { UserRole } from "@/types/auth";
 
 export interface LoginState {
@@ -139,9 +136,17 @@ export async function resendSignupCode(): Promise<VerifyState> {
   return { resent: true };
 }
 
+/** Only same-origin paths are accepted, so a crafted `?next=` can't bounce a
+    freshly signed-in user off to another site. */
+function safeNext(value: string): string | null {
+  if (!value.startsWith("/") || value.startsWith("//")) return null;
+  return value;
+}
+
 export async function login(_prevState: LoginState | undefined, formData: FormData): Promise<LoginState> {
-  const email = String(formData.get("email") || "").trim();
+  const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
+  const next = safeNext(String(formData.get("next") || ""));
 
   if (!email || !password) {
     return { error: "Please enter both email and password." };
@@ -163,52 +168,6 @@ export async function login(_prevState: LoginState | undefined, formData: FormDa
     return { error: "Invalid email or password." };
   }
 
-  const code = generateCode();
-  const codeHash = await bcrypt.hash(code, 10);
-
-  try {
-    await sendLoginCodeEmail(account.email, account.name, code);
-  } catch (err) {
-    console.error("login: failed to send verification email", err);
-    return { error: "Couldn't send the verification email. Please try again in a moment." };
-  }
-
-  await setPendingLoginCookie({
-    userId: account._id.toString(),
-    name: account.name,
-    email: account.email,
-    role: account.role,
-    codeHash,
-  });
-
-  redirect("/login/verify");
-}
-
-export async function verifyLogin(_prevState: VerifyState | undefined, formData: FormData): Promise<VerifyState> {
-  const code = String(formData.get("code") || "").trim();
-
-  const pending = await getPendingLogin();
-  if (!pending) {
-    return { error: "Your sign-in session expired. Please log in again." };
-  }
-
-  if (!code || code.length !== 6) {
-    return { error: "Enter the 6-digit code from your email." };
-  }
-
-  const match = await bcrypt.compare(code, pending.codeHash);
-  if (!match) {
-    return { error: "That code doesn't match. Check your email and try again." };
-  }
-
-  await connectDB();
-
-  const account = await User.findById(pending.userId);
-  if (!account || account.status !== "active") {
-    await clearPendingLoginCookie();
-    return { error: "This account is no longer available. Contact an administrator." };
-  }
-
   const sessionUser = {
     id: account._id.toString(),
     name: account.name,
@@ -222,36 +181,7 @@ export async function verifyLogin(_prevState: VerifyState | undefined, formData:
   const ip = headerList.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   await AuditLog.create({ userId: sessionUser.id, action: "LOGIN", module: "auth", recordId: null, ipAddress: ip });
 
-  await clearPendingLoginCookie();
-
-  redirect("/dashboard");
-}
-
-export async function resendLoginCode(): Promise<VerifyState> {
-  const pending = await getPendingLogin();
-  if (!pending) {
-    return { error: "Your sign-in session expired. Please log in again." };
-  }
-
-  const code = generateCode();
-  const codeHash = await bcrypt.hash(code, 10);
-
-  try {
-    await sendLoginCodeEmail(pending.email, pending.name, code);
-  } catch (err) {
-    console.error("resendLoginCode: failed to send verification email", err);
-    return { error: "Couldn't resend the code. Please try again in a moment." };
-  }
-
-  await setPendingLoginCookie({
-    userId: pending.userId,
-    name: pending.name,
-    email: pending.email,
-    role: pending.role,
-    codeHash,
-  });
-
-  return { resent: true };
+  redirect(next ?? "/dashboard");
 }
 
 export async function logout() {

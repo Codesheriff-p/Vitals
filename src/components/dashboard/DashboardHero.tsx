@@ -3,6 +3,18 @@ export interface HeroStat {
   label: string;
 }
 
+const HONORIFICS = new Set(["dr", "dr.", "prof", "prof.", "mr", "mr.", "mrs", "mrs.", "ms", "ms."]);
+
+/** First name for the greeting, keeping an honorific attached to it so doctors
+    are welcomed back as "Dr. James" rather than the bare "Dr.". */
+function greetingName(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length > 1 && HONORIFICS.has(parts[0].toLowerCase())) {
+    return `${parts[0]} ${parts[1]}`;
+  }
+  return parts[0] ?? name;
+}
+
 export default function DashboardHero({ name, stats }: { name: string; stats?: HeroStat[] }) {
   return (
     <div className="relative mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-900/[0.03] sm:p-7 dark:border-white/10 dark:bg-ink dark:shadow-black/20">
@@ -13,7 +25,7 @@ export default function DashboardHero({ name, stats }: { name: string; stats?: H
           System status &middot; Live
         </p>
         <h1 className="mt-2 font-display text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
-          Welcome back, {name.split(" ")[0]}
+          Welcome back, {greetingName(name)}
         </h1>
 
         {stats && stats.length > 0 && (
