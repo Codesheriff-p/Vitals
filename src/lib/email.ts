@@ -24,10 +24,19 @@ function getTransporter(): Transporter {
   return transporter;
 }
 
-async function sendCodeEmail(to: string, subject: string, html: string) {
-  const from = process.env.EMAIL_FROM;
-  if (!from) throw new Error("EMAIL_FROM is not set. Add it to .env.local.");
+/** No SMTP configured (e.g. local/demo dev) — print the code instead of emailing it, so
+    seeded demo accounts (see README "Demo Logins") stay usable without a mail server. */
+function isEmailConfigured(): boolean {
+  return Boolean(process.env.SMTP_HOST && process.env.EMAIL_FROM);
+}
 
+async function sendCodeEmail(to: string, subject: string, html: string, code: string) {
+  if (!isEmailConfigured()) {
+    console.log(`[dev] SMTP not configured — verification code for ${to}: ${code}`);
+    return;
+  }
+
+  const from = process.env.EMAIL_FROM as string;
   try {
     await getTransporter().sendMail({ from, to, subject, html });
   } catch (err) {
@@ -46,7 +55,8 @@ export async function sendSignupCodeEmail(to: string, name: string, code: string
         <p style="font-size: 32px; font-weight: 700; letter-spacing: 0.15em; margin: 24px 0;">${code}</p>
         <p style="color: #64748b; font-size: 13px;">This code expires in 10 minutes. If you didn't request a VITALS HMS account, you can ignore this email.</p>
       </div>
-    `
+    `,
+    code
   );
 }
 
@@ -61,6 +71,7 @@ export async function sendLoginCodeEmail(to: string, name: string, code: string)
         <p style="font-size: 32px; font-weight: 700; letter-spacing: 0.15em; margin: 24px 0;">${code}</p>
         <p style="color: #64748b; font-size: 13px;">This code expires in 10 minutes. If you didn't try to sign in, you can ignore this email — your password wasn't shared and your account stays safe.</p>
       </div>
-    `
+    `,
+    code
   );
 }
