@@ -7,10 +7,6 @@ import type { SessionUser, UserRole } from "@/types/auth";
 const COOKIE_NAME = "hms_token";
 const TOKEN_TTL = "8h";
 
-const PENDING_SIGNUP_COOKIE = "hms_pending_signup";
-const PENDING_LOGIN_COOKIE = "hms_pending_login";
-const PENDING_TTL_SECONDS = 10 * 60; // 10 minutes to enter/verify a code
-
 function getSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) throw new Error("JWT_SECRET is not set. Add it to .env.local.");
@@ -70,85 +66,4 @@ export async function requireRole(roles: UserRole[]): Promise<SessionUser> {
   const user = await requireUser();
   if (!roles.includes(user.role)) redirect("/forbidden");
   return user;
-}
-
-// --- Short-lived "pending" state, held in a signed cookie rather than the
-// database, for the signup email-verification step that shouldn't create a
-// User record until it's actually confirmed. ---
-
-export interface PendingSignupPayload {
-  purpose: "signup";
-  name: string;
-  email: string;
-  passwordHash: string;
-  role: UserRole;
-  codeHash: string;
-}
-
-function pendingCookieOptions(maxAge: number) {
-  return {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
-    path: "/",
-    maxAge,
-  };
-}
-
-export async function setPendingSignupCookie(payload: Omit<PendingSignupPayload, "purpose">) {
-  const store = await cookies();
-  const token = jwt.sign({ purpose: "signup", ...payload }, getSecret(), { expiresIn: PENDING_TTL_SECONDS });
-  store.set(PENDING_SIGNUP_COOKIE, token, pendingCookieOptions(PENDING_TTL_SECONDS));
-}
-
-export async function getPendingSignup(): Promise<PendingSignupPayload | null> {
-  const store = await cookies();
-  const token = store.get(PENDING_SIGNUP_COOKIE)?.value;
-  if (!token) return null;
-  try {
-    const payload = jwt.verify(token, getSecret()) as PendingSignupPayload;
-    return payload.purpose === "signup" ? payload : null;
-  } catch {
-    return null;
-  }
-}
-
-export async function clearPendingSignupCookie() {
-  const store = await cookies();
-  store.delete(PENDING_SIGNUP_COOKIE);
-}
-
-// --- Same idea, for the login OTP step: password already checked, session
-// isn't created until the emailed code is confirmed. ---
-
-export interface PendingLoginPayload {
-  purpose: "login";
-  userId: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  codeHash: string;
-}
-
-export async function setPendingLoginCookie(payload: Omit<PendingLoginPayload, "purpose">) {
-  const store = await cookies();
-  const token = jwt.sign({ purpose: "login", ...payload }, getSecret(), { expiresIn: PENDING_TTL_SECONDS });
-  store.set(PENDING_LOGIN_COOKIE, token, pendingCookieOptions(PENDING_TTL_SECONDS));
-}
-
-export async function getPendingLogin(): Promise<PendingLoginPayload | null> {
-  const store = await cookies();
-  const token = store.get(PENDING_LOGIN_COOKIE)?.value;
-  if (!token) return null;
-  try {
-    const payload = jwt.verify(token, getSecret()) as PendingLoginPayload;
-    return payload.purpose === "login" ? payload : null;
-  } catch {
-    return null;
-  }
-}
-
-export async function clearPendingLoginCookie() {
-  const store = await cookies();
-  store.delete(PENDING_LOGIN_COOKIE);
 }

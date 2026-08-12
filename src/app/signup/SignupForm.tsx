@@ -80,11 +80,11 @@ export default function SignupForm() {
         </div>
 
         <button type="submit" disabled={pending} className={`${authBtnPrimary} w-full py-2.5`}>
-          {pending ? "Sending code..." : "Continue"}
+          {pending ? "Submitting..." : "Continue"}
         </button>
 
         <p className="text-center text-xs leading-relaxed text-slate-400 dark:text-white/50">
-          We&apos;ll email you a 6-digit code to verify your address before your request goes to an administrator.
+          An administrator needs to activate your account before you can sign in.
         </p>
       </form>
     </div>

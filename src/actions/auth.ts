@@ -1,24 +1,11 @@
 "use server";
 
-import { randomInt } from "crypto";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { connectDB, User, AuditLog } from "@/models";
-import {
-  setSessionCookie,
-  clearSessionCookie,
-  getCurrentUser,
-  setPendingSignupCookie,
-  getPendingSignup,
-  clearPendingSignupCookie,
-  setPendingLoginCookie,
-  getPendingLogin,
-  clearPendingLoginCookie,
-} from "@/lib/auth";
+import { setSessionCookie, clearSessionCookie, getCurrentUser } from "@/lib/auth";
 import { isSelfServiceRole } from "@/lib/userRoles";
-import { sendSignupCodeEmail, sendLoginCodeEmail } from "@/lib/email";
-import type { UserRole } from "@/types/auth";
 
 export interface LoginState {
   error?: string;
@@ -28,17 +15,8 @@ export interface SignupState {
   error?: string;
 }
 
-export interface VerifyState {
-  error?: string;
-  resent?: boolean;
-}
-
 const PENDING_APPROVAL_MESSAGE =
   "Account requested. An administrator needs to activate it before you can sign in.";
-
-function generateCode(): string {
-  return String(randomInt(0, 1_000_000)).padStart(6, "0");
-}
 
 export async function signup(_prevState: SignupState | undefined, formData: FormData): Promise<SignupState> {
   const name = String(formData.get("name") || "").trim();
@@ -59,84 +37,10 @@ export async function signup(_prevState: SignupState | undefined, formData: Form
   if (existing) return { error: "An account with this email already exists." };
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const code = generateCode();
-  const codeHash = await bcrypt.hash(code, 10);
 
-  try {
-    await sendSignupCodeEmail(email, name, code);
-  } catch (err) {
-    console.error("signup: failed to send verification email", err);
-    return { error: "Couldn't send the verification email. Please try again in a moment." };
-  }
-
-  await setPendingSignupCookie({ name, email, passwordHash, role: role as UserRole, codeHash });
-
-  redirect("/signup/verify");
-}
-
-export async function verifySignup(_prevState: VerifyState | undefined, formData: FormData): Promise<VerifyState> {
-  const code = String(formData.get("code") || "").trim();
-
-  const pending = await getPendingSignup();
-  if (!pending) {
-    return { error: "Your verification session expired. Please request an account again." };
-  }
-
-  if (!code || code.length !== 6) {
-    return { error: "Enter the 6-digit code from your email." };
-  }
-
-  const match = await bcrypt.compare(code, pending.codeHash);
-  if (!match) {
-    return { error: "That code doesn't match. Check your email and try again." };
-  }
-
-  await connectDB();
-
-  const existing = await User.findOne({ email: pending.email });
-  if (existing) {
-    await clearPendingSignupCookie();
-    return { error: "An account with this email already exists." };
-  }
-
-  await User.create({
-    name: pending.name,
-    email: pending.email,
-    password: pending.passwordHash,
-    role: pending.role,
-    status: "inactive",
-  });
-
-  await clearPendingSignupCookie();
+  await User.create({ name, email, password: passwordHash, role, status: "inactive" });
 
   redirect(`/login?success=${encodeURIComponent(PENDING_APPROVAL_MESSAGE)}`);
-}
-
-export async function resendSignupCode(): Promise<VerifyState> {
-  const pending = await getPendingSignup();
-  if (!pending) {
-    return { error: "Your verification session expired. Please request an account again." };
-  }
-
-  const code = generateCode();
-  const codeHash = await bcrypt.hash(code, 10);
-
-  try {
-    await sendSignupCodeEmail(pending.email, pending.name, code);
-  } catch (err) {
-    console.error("resendSignupCode: failed to send verification email", err);
-    return { error: "Couldn't resend the code. Please try again in a moment." };
-  }
-
-  await setPendingSignupCookie({
-    name: pending.name,
-    email: pending.email,
-    passwordHash: pending.passwordHash,
-    role: pending.role,
-    codeHash,
-  });
-
-  return { resent: true };
 }
 
 export async function login(_prevState: LoginState | undefined, formData: FormData): Promise<LoginState> {
@@ -163,52 +67,6 @@ export async function login(_prevState: LoginState | undefined, formData: FormDa
     return { error: "Invalid email or password." };
   }
 
-  const code = generateCode();
-  const codeHash = await bcrypt.hash(code, 10);
-
-  try {
-    await sendLoginCodeEmail(account.email, account.name, code);
-  } catch (err) {
-    console.error("login: failed to send verification email", err);
-    return { error: "Couldn't send the verification email. Please try again in a moment." };
-  }
-
-  await setPendingLoginCookie({
-    userId: account._id.toString(),
-    name: account.name,
-    email: account.email,
-    role: account.role,
-    codeHash,
-  });
-
-  redirect("/login/verify");
-}
-
-export async function verifyLogin(_prevState: VerifyState | undefined, formData: FormData): Promise<VerifyState> {
-  const code = String(formData.get("code") || "").trim();
-
-  const pending = await getPendingLogin();
-  if (!pending) {
-    return { error: "Your sign-in session expired. Please log in again." };
-  }
-
-  if (!code || code.length !== 6) {
-    return { error: "Enter the 6-digit code from your email." };
-  }
-
-  const match = await bcrypt.compare(code, pending.codeHash);
-  if (!match) {
-    return { error: "That code doesn't match. Check your email and try again." };
-  }
-
-  await connectDB();
-
-  const account = await User.findById(pending.userId);
-  if (!account || account.status !== "active") {
-    await clearPendingLoginCookie();
-    return { error: "This account is no longer available. Contact an administrator." };
-  }
-
   const sessionUser = {
     id: account._id.toString(),
     name: account.name,
@@ -222,36 +80,7 @@ export async function verifyLogin(_prevState: VerifyState | undefined, formData:
   const ip = headerList.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   await AuditLog.create({ userId: sessionUser.id, action: "LOGIN", module: "auth", recordId: null, ipAddress: ip });
 
-  await clearPendingLoginCookie();
-
   redirect("/dashboard");
-}
-
-export async function resendLoginCode(): Promise<VerifyState> {
-  const pending = await getPendingLogin();
-  if (!pending) {
-    return { error: "Your sign-in session expired. Please log in again." };
-  }
-
-  const code = generateCode();
-  const codeHash = await bcrypt.hash(code, 10);
-
-  try {
-    await sendLoginCodeEmail(pending.email, pending.name, code);
-  } catch (err) {
-    console.error("resendLoginCode: failed to send verification email", err);
-    return { error: "Couldn't resend the code. Please try again in a moment." };
-  }
-
-  await setPendingLoginCookie({
-    userId: pending.userId,
-    name: pending.name,
-    email: pending.email,
-    role: pending.role,
-    codeHash,
-  });
-
-  return { resent: true };
 }
 
 export async function logout() {
