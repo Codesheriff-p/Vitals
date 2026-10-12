@@ -20,7 +20,12 @@ function connect(): Promise<typeof mongoose> {
 // design would read process.env before it's populated.
 export default function connectDB(): Promise<typeof mongoose> {
   if (!global.__hmsMongooseConn) {
-    global.__hmsMongooseConn = connect();
+    // Drop a failed attempt from the cache so the next request retries,
+    // instead of a warm serverless instance failing forever.
+    global.__hmsMongooseConn = connect().catch((err) => {
+      global.__hmsMongooseConn = undefined;
+      throw err;
+    });
   }
   return global.__hmsMongooseConn;
 }

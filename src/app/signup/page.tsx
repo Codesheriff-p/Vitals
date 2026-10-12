@@ -5,7 +5,7 @@ import AuthShell from "@/components/auth/AuthShell";
 import { authLinkClass, authMutedClass } from "@/components/auth/authStyles";
 import SignupForm from "./SignupForm";
 
-export const metadata = { title: "Request Account - VITALS HMS" };
+export const metadata = { title: "Create Account - VITALS HMS" };
 
 export default async function SignupPage() {
   const user = await getCurrentUser();
@@ -13,8 +13,8 @@ export default async function SignupPage() {
 
   return (
     <AuthShell
-      eyebrow="Staff access request"
-      subtitle="Request a staff account"
+      eyebrow="Staff sign up"
+      subtitle="Create a staff account"
       switchLink={
         <span className={authMutedClass}>
           Already have an account?{" "}

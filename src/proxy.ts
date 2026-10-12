@@ -20,8 +20,7 @@ export function proxy(request: NextRequest) {
 }
 
 // Protect everything except the marketing landing page, the login/signup
-// pages (and their sub-steps, e.g. /signup/verify), static assets, and the
-// favicon. Those pages re-check the session themselves and redirect
+// pages, static assets, and the favicon. Those pages re-check the session themselves and redirect
 // signed-in users to /dashboard.
 // Individual pages/Server Actions still re-check the session and role — this
 // is a first line of defense, not the only one.

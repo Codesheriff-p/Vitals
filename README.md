@@ -125,11 +125,9 @@ All seeded accounts use these passwords:
 | Receptionist | blessing.udo@hms.com | Reception@123 |
 | Receptionist | chidi.obi@hms.com | Reception@123 |
 
-Signing in is email + password — these seeded addresses aren't real mailboxes,
-so the login step deliberately doesn't email a code. Self-service signup at
-`/signup` does: it emails a 6-digit code to verify the address (so it needs the
-SMTP vars above), and the resulting account lands as `inactive` until an admin
-activates it from **Users**.
+Signing in is email + password, with no email codes. Anyone can create an
+account at `/signup` (any role except Admin); it's active immediately and they're
+signed straight in. After that they log in with the same email and password.
 
 ## Other Commands
 
