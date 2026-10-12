@@ -27,7 +27,7 @@ export default async function LoginPage({
         <span className={authMutedClass}>
           New here?{" "}
           <Link href="/signup" className={authLinkClass}>
-            Request an account
+            Create an account
           </Link>
         </span>
       }
